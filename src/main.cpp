@@ -116,9 +116,22 @@ constexpr static std::tuple<int, int, int> WinIndexCombinations[8] =
   {0, 4, 8}, {2, 4, 6}
 };
 
+const char* PlayerTurnToString()
+{
+  switch(g_PlayerTurn)
+  {
+    case CellState::X:
+      return "X's turn";
+    case CellState::O:
+      return "O's turn";
+    default:
+      return "";
+  }
+}
+
 int main(int argc, char** argv)
 {
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Hello World");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic Tac Toe");
   while(!WindowShouldClose())
   {
     BeginDrawing();
@@ -161,6 +174,10 @@ int main(int argc, char** argv)
       }
 
     }
+
+    // UI
+
+    DrawText(PlayerTurnToString(), SCREEN_WIDTH - 100, 40, 20, FG_COLOR);
 
     EndDrawing();
   }
