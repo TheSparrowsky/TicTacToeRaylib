@@ -157,6 +157,15 @@ constexpr static std::tuple<int, int, int> WinIndexCombinations[8] =
   {0, 4, 8}, {2, 4, 6}
 };
 
+bool IsAnyMovePossible()
+{
+  for(const auto& cell : Cells)
+    if(cell.State == CellState::None)
+      return true;
+
+  return false;
+}
+
 const char* PlayerTurnToString()
 {
   switch(g_PlayerTurn)
@@ -179,6 +188,9 @@ int main(int argc, char** argv)
   while(!closeWindow)
   {
     closeWindow = WindowShouldClose();
+
+    if(!IsAnyMovePossible())
+      g_GameOver = true;
 
     BeginDrawing();
     ClearBackground(BG_COLOR);
