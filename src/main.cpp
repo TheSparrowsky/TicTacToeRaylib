@@ -1,5 +1,7 @@
 #include <iostream>
 #include <tuple>
+#include <functional>
+#include <array>
 #include "raylib.h"
 
 #define BG_COLOR DARKGRAY
@@ -11,6 +13,40 @@
 #define CELL_WIDTH 80
 #define CELL_HEIGHT 90 
 //CELL_WIDTH
+
+bool g_GameOver = false;
+
+struct Button 
+{
+  Rectangle Bounds;
+  const char* Text;
+  std::function<void()> OnClick;
+
+  Color m_Color;
+
+  void Update()
+  {
+    if(CheckCollisionPointRec(GetMousePosition(), Bounds))
+    {
+      m_Color = DARKGRAY;
+      if(IsMouseButtonPressed(0))
+        if(OnClick)
+          OnClick();
+    }
+    else
+    {
+      m_Color = WHITE;
+    }
+  }
+
+  void Draw() const
+  {
+    int textWidth = MeasureText(Text, 40.f);
+    DrawRectangleRec(Bounds, FG_COLOR);
+    DrawText(Text, Bounds.x + (Bounds.width / 2.f - textWidth / 2.f), Bounds.y + (Bounds.height / 2.f - 20.f), 40.f, m_Color);
+  }
+
+};
 
 enum class CellState : uint8_t
 {
@@ -77,7 +113,7 @@ struct BoardCell
       DrawLineEx({startPosition.x + Width - 20, startPosition.y + 20}, {startPosition.x + 20, startPosition.y + Height - 20}, 2.0f, FG_COLOR);
     }
 
-    if(MouseOverlaps(GetMousePosition()) && State == CellState::None)
+    if(!g_GameOver && MouseOverlaps(GetMousePosition()) && State == CellState::None)
     {
       DrawRectangleRounded({Position.x+4, Position.y+4, Width - 8, Height - 8}, 0.4f, 1, VIOLET);
       if(IsMouseButtonPressed(0))
@@ -102,12 +138,17 @@ struct BoardCell
 //  Direction::East, Direction::North, Direction::West
 //};
 
-static BoardCell Cells[9] = 
+static std::array<BoardCell, 9> Cells; 
+
+static void ClearBoard()
 {
-  {0, Direction::South | Direction::East }, {1, Direction::South}, {2, Direction::West | Direction::South},
-  {3, Direction::South | Direction::East }, {4, Direction::None }, {5, Direction::West | Direction::South},
-  {6, Direction::East}, {7, Direction::North}, {8, Direction::West}
-};
+  Cells =
+  {
+    BoardCell{0, Direction::South | Direction::East }, {1, Direction::South}, {2, Direction::West | Direction::South},
+    {3, Direction::South | Direction::East }, {4, Direction::None }, {5, Direction::West | Direction::South},
+    {6, Direction::East}, {7, Direction::North}, {8, Direction::West}
+  };
+}
 
 constexpr static std::tuple<int, int, int> WinIndexCombinations[8] =
 {
@@ -132,8 +173,13 @@ const char* PlayerTurnToString()
 int main(int argc, char** argv)
 {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tic Tac Toe");
-  while(!WindowShouldClose())
+
+  bool closeWindow = false;
+  ClearBoard();
+  while(!closeWindow)
   {
+    closeWindow = WindowShouldClose();
+
     BeginDrawing();
     ClearBackground(BG_COLOR);
 
@@ -152,6 +198,8 @@ int main(int argc, char** argv)
       if(Cells[a].State != CellState::None && Cells[b].State != CellState::None && Cells[c].State != CellState::None 
           && Cells[a].State == Cells[b].State && Cells[b].State == Cells[c].State)
       {
+        g_GameOver = true;
+
         switch(i)
         {
           case 0:
@@ -176,8 +224,29 @@ int main(int argc, char** argv)
     }
 
     // UI
+  
+    if(!g_GameOver)
+    {
+      DrawText(PlayerTurnToString(), SCREEN_WIDTH - 100, 40, 20, FG_COLOR);
+    }
+    else
+    {
+      DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, 0.5f));
+      DrawText("Game Over", SCREEN_WIDTH / 2.f - 150, 80, 60, FG_COLOR);
+      
+      Button bRestart{{SCREEN_WIDTH / 2.f - 120, 160.f, 240.f, 40.f}, "Restart", [&](){
+        ClearBoard();
+        g_GameOver = false;
+      }};
+      bRestart.Update();
+      bRestart.Draw();
 
-    DrawText(PlayerTurnToString(), SCREEN_WIDTH - 100, 40, 20, FG_COLOR);
+      Button bExit{{SCREEN_WIDTH / 2.f - 120, 210.f, 240.f, 40.f}, "Exit", [&](){
+        closeWindow = true;
+      }};
+      bExit.Update();
+      bExit.Draw();
+    }
 
     EndDrawing();
   }
