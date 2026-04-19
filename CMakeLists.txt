@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 4.2)
 project(TicTacToeRaylib)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(vendor/raylib)
 
